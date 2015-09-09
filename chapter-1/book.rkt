@@ -124,4 +124,44 @@
     (number-elements-from lst 0)))
 
 
+;; list-sum : Listof(Int) -> Int
+(define list-sum
+  (lambda (loi)
+    (if (null? loi)
+        0
+        (+ (car loi)
+           (list-sum (cdr loi))))))
+
+
+(check-expect (list-sum '()) 0)
+(check-expect (list-sum '(1 2 3)) 6)
+
+
+;; partial-vector-sum : Vectorof(Int) * Int -> Int
+;; usage : if 0 <= n < length(v), then
+;;         (partial-vector-sum v n) = \sigma_{i = 0}^{i = n}v_i
+
+(define partial-vector-sum
+  (lambda (v n)
+    (if (zero? n)
+        (vector-ref v 0)
+        (+ (vector-ref v n)
+           (partial-vector-sum v (- n 1))))))
+
+
+;; vector-sum : Vectorof(Int) -> Int
+;; usage : (vector-sum v) = \sigma_{i = 0}^{i = length(v) - 1}v_i
+
+(define vector-sum
+  (lambda (v)
+    (let ((n (vector-length v)))
+      (if (zero? n)
+          0
+          (partial-vector-sum v (- n 1))))))
+
+
+(check-expect (vector-sum (make-vector 5 1)) 5)
+(check-expect (vector-sum (make-vector 5 2)) 10)
+(check-expect (vector-sum (make-vector 0 '())) 0)
+
 (test)
