@@ -46,6 +46,8 @@
   (lambda (bt)
     (car (helper bt 0))))
 
+;; helper return an tuple, indicate the result tree, and the next
+;; label value which is the max value of the left tree plus one
 (define helper
   (lambda (bt cur)
     (cond
