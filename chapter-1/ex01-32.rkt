@@ -10,6 +10,8 @@
 (check-expect (rson '(bar 1 (foo 2 3))) '(foo 2 3))
 (check-expect (content-of 3) 3)
 (check-expect (content-of '(bar 1 (foo 2 3))) 'bar)
+(check-expect (double-tree 3) 6)
+(check-expect (double-tree '(foo 1 (bar 2 3))) '(foo 2 (bar 4 6)))
 
 ;; Bintree ::= Int | (Symbol Bintree Bintree)
 ;; Example:
@@ -55,5 +57,16 @@
         bt
         (car bt))))
 
+
+;; double-tree : Bintree -> Bintree
+;; usage : (double-tree 3) = 6
+;;         (double-tree '(foo 1 (bar 2 3))) = '(foo 2 (bar 4 6))
+(define double-tree
+  (lambda (bt)
+    (if (leaf? bt)
+        (* (content-of bt) 2)
+        (list (car bt)
+              (double-tree (lson bt))
+              (double-tree (rson bt))))))
 
 (test)
