@@ -130,3 +130,25 @@
         (multiply num (factorial (predecessor num))))))
 
 (test)
+
+;; benchmark of different base
+;; N = 16
+;; > (time (factorial (num->bigint 10)))
+;; cpu time: 20047 real time: 18822 gc time: 9815
+;; (0 0 15 5 7 3)
+;; N = 32
+;; > (time (factorial (num->bigint 10)))
+;; cpu time: 14447 real time: 14464 gc time: 6234
+;; (0 24 23 14 3)
+;; N = 64
+;; > (time (factorial (num->bigint 10)))
+;; cpu time: 17530 real time: 17555 gc time: 8982
+;; (0 60 53 13)
+;; N = 1024
+;; > (time (factorial (num->bigint 10)))
+;; cpu time: 17912 real time: 17916 gc time: 8999
+;; (768 471 3)
+;; N = 8192
+;; > (time (factorial (num->bigint 10)))
+;; cpu time: 16945 real time: 16953 gc time: 8886
+;; (7936 442)
