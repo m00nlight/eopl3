@@ -24,6 +24,21 @@
 
 
 
+(check-expect (has-binding? 'c '((a . 1) (b . 2))) #f)
+(check-expect (has-binding? 'b '((a . 1) (b . 2))) #t)
+
+;; has-binding? Var * Env -> Bool
+;; descp : Judge whehter an Var is in environment, and return #t if the 
+;;         binding of the var is in the environment.
+
+(define has-binding?
+  (lambda (var env)
+    (cond
+      [(empty-env? env) #f]
+      [(eqv? var (caar env)) #t]
+      [else (has-binding? var (cdr env))])))
+
+
 (check-expect (apply-env 'a '((b . 1) (a . 2))) 2)
 (check-expect (apply-env 'b '((b . 1) (a . 2))) 1)
 (check-error (apply-env 'c '((b . 1) (a . 2))))
