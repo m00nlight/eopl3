@@ -14,6 +14,12 @@
 ;;   - #t if stack is empty
 ;;   - #f otherwise
 
+;; Constructor : build elements of that data type
+;; Observer : Extract information from the value of the data type
 
-;; Operations of constructors are : empty-stack, push, pop
-;; Operations of observers : empty-stack?, top
+;; So based on the definition above, we can know that
+;; Operations of constructors are : empty-stack, push
+;; Operations of observers : empty-stack?, top, pop
+
+;; Here pop is marked as an observer instead of a constructor since
+;; it extract some information from the structure
