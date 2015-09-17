@@ -2,90 +2,66 @@
 
 (require test-engine/racket-tests)
 
+
 ;; LcExp ::= Identifier
 ;;       ::= (lambda (Identifier) LcExp)
 ;;       ::= (LcExp LcExp)
 
-;; Modify the representation so that the bound variable in lambda expression
-;; do not have parenthess. This can be done by just modify the lambda-exp, 
-;; lambda-exp->bound-var procedure of the previous exercise.
+;; This exercise asked to invented two other representations of the lambda-calculus
+;; expression.
 
+;; 1 is to use the internal list to represent LcExp like in chapter one, only need 
+;; to add observer and constructor proedure.
 
-;; var-exp : Var -> LcExp
 (define var-exp
   (lambda (var)
-    `(lc-exp var ,var)))
+    var))
 
-;; lambda-exp : Var * Lc-exp -> Lc-exp
 (define lambda-exp
   (lambda (var body)
-    `(lc-exp lambda ,var ,body)))
+    `(lambda ,var ,body)))
 
-;; app-exp : Lc-exp * Lc-exp -> Lc-exp
 (define app-exp
   (lambda (lhs rhs)
-    `(lc-exp app ,lhs ,rhs)))
+    `(,lhs ,rhs)))
 
-(check-expect (var-exp? (var-exp 'x)) #t)
-(check-expect (var-exp? (lambda-exp 'x (var-exp 'y))) #f)
-
-;; var-exp? : Lc-exp -> Bool
 (define var-exp?
   (lambda (exp)
-    (eqv? (cadr exp) 'var)))
+    (symbol? exp)))
 
-;; lambda-exp? : Lc-exp -> Bool
 (define lambda-exp?
   (lambda (exp)
-    (eqv? (cadr exp) 'lambda)))
+    (eqv? (car exp) 'lambda)))
 
-;; app-exp? LcExp -> Bool
 (define app-exp?
   (lambda (exp)
-    (eqv? (cadr exp) 'app)))
+    (and (not (var-exp? exp))
+         (not (lambda-exp? exp)))))
 
-;; var-exp->var : LcExp -> Var
+
 (define var-exp->var
   (lambda (exp)
-    (caddr exp)))
+    exp))
 
-;; lambda-exp->bound-var : LcExp -> Var
 (define lambda-exp->bound-var
   (lambda (exp)
-    (caddr exp)))
+    (cadr exp)))
 
-;; lambda-exp->body : LcExp -> LcExp
 (define lambda-exp->body
   (lambda (exp)
-    (cadddr exp)))
-
-;; app-exp->rator : LcExp -> LcExp
-(define app-exp->rator
-  (lambda (exp)
     (caddr exp)))
 
-;; app-exp->rand : LcExp -> LcExp
+(define app-exp->rator
+  (lambda (exp)
+    (car exp)))
+
 (define app-exp->rand
   (lambda (exp)
-    (cadddr exp)))
+    (cadr exp)))
 
 
-
-;; origin definition of occur-free?
-#;
-(define occur-free?
-  (lambda (var exp)
-    (cond
-      ((symbol? exp) (eqv? var exp))
-      ((eqv? (car exp) 'lambda)
-       (and
-        (not (eqv? var (car (cadr exp))))
-        (occur-free? var (caddr exp))))
-      (else
-       (or
-        (occur-free? var (car exp))
-        (occur-free? var (cadr exp)))))))
-
+;; the following are copy from exercise 02-16. Just to modify the representation
+;; should not affect the test result of the following code.
 
 (check-expect (occur-free? 'x (var-exp 'x)) #t)
 (check-expect (occur-free? 'x (var-exp 'y)) #f)
@@ -110,6 +86,7 @@
        (or
         (occur-free? search-var (app-exp->rator exp))
         (occur-free? search-var (app-exp->rand exp)))])))
+
 
 
 (test)
