@@ -4,7 +4,8 @@
 
 (define identifier? symbol?)
 
-;; Env ::= '() | (cons (var . val) env)
+;; Env ::= (empty-env)
+;;       | (extend-env Var SchemeVal env)
 ;; Var ::= Sym
 
 ;; rewrite the env program with define-datatype
