@@ -2,8 +2,8 @@
 
 (require test-engine/racket-tests)
 
-;; Extend the LET language of exercise 3.07 by adding operator like
-;; add, multiply and integer quotient
+;; Extend the LET language in exercise 3.08 by adding operator like
+;; equal-exp?, greater-exp? and less-exp?
 
 ;; Let language specification
 
@@ -21,6 +21,15 @@
    (exp2 expression?))
   (zero-exp?
    (exp1 expression?))
+  (equal-exp?
+   (exp1 expression?)
+   (exp2 expression?))
+  (greater-exp?
+   (exp1 expression?)
+   (exp2 expression?))
+  (less-exp?
+   (exp1 expression?)
+   (exp2 expression?))
   (if-exp
    (exp1 expression?)
    (exp2 expression?)
@@ -131,6 +140,18 @@
      ("zero?" "(" expression ")")
      zero-exp?)
 
+    (expression
+     ("equal?" "(" expression "," expression ")")
+     equal-exp?)
+
+    (expression
+     ("greater?" "(" expression "," expression ")")
+     greater-exp?)
+
+    (expression
+     ("less?" "(" expression "," expression ")")
+     less-exp?)
+
     ;; add grammar for minus operation
     (expression
      ("minus" "(" expression ")")
@@ -198,6 +219,21 @@
                      (if (zero? num1)
                          (bool-val #t)
                          (bool-val #f))))]
+      [equal-exp? (exp1 exp2)
+                  (let [(val1 (value-of exp1 env))
+                        (val2 (value-of exp2 env))]
+                    (bool-val (eqv? (expval->num val1)
+                                    (expval->num val2))))]
+      [greater-exp? (exp1 exp2)
+                    (let [(val1 (value-of exp1 env))
+                          (val2 (value-of exp2 env))]
+                      (bool-val (> (expval->num val1)
+                                   (expval->num val2))))]
+      [less-exp? (exp1 exp2)
+                 (let [(val1 (value-of exp1 env))
+                       (val2 (value-of exp2 env))]
+                   (bool-val (< (expval->num val1)
+                                (expval->num val2))))]
       [minus-exp (exp)
                  (let [(val (value-of exp env))]
                    (num-val (- (expval->num val))))]
@@ -249,6 +285,15 @@ in -(-(x, 8), y)")
   "quot(mul(add(minus (- (minus(5), 9)), -(3,2)), add(4, -2)),
 add(4, 3))")
 
+(define program7
+  "equal?(add(3, 4), -(10, 3))")
+
+(define program8
+  "greater?(add(3, 4), -(9, 3))")
+
+(define program9
+  "less?(add(3, 4), -(11, 3))")
+
 (check-expect (scan&parse "let x = 5 in -(x, 3)")
               (a-program (let-exp 'x (const-exp 5)
                                   (diff-exp (var-exp 'x)
@@ -260,5 +305,8 @@ add(4, 3))")
 (check-expect (run program4) (num-val 15))
 (check-expect (run program5) (num-val 30))
 (check-expect (run program6) (num-val 4))
+(check-expect (run program7) (bool-val #t))
+(check-expect (run program8) (bool-val #t))
+(check-expect (run program9) (bool-val #t))
 
 (test)
