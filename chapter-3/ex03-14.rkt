@@ -9,54 +9,6 @@
 
 (define identifier? symbol?)
 
-(define-datatype program program?
-  (a-program
-   (exp1 (lambda (x) (or (expression? x)
-                         (bool-exp? x))))))
-
-
-;; definition of the bool-exp
-(define-datatype bool-exp bool-exp?
-  (zero-exp?
-   (exp1 expression?))
-  (equal-exp?
-   (exp1 expression?)
-   (exp2 expression?))
-  (greater-exp?
-   (exp1 expression?)
-   (exp2 expression?))
-  (less-exp?
-   (exp1 expression?)
-   (exp2 expression?)))
-
-(define-datatype expression expression?
-  (var-expression
-   (var identifier?))
-  (if-expression
-   (exp1 bool-exp?)
-   (exp2 expression?)
-   (exp3 expression?))
-  (let-expression
-   (var identifier?)
-   (exp1 expression?)
-   (body expression?))
-  (const-exp
-   (num number?))
-  (diff-exp
-   (exp1 expression?)
-   (exp2 expression?))
-  (minus-exp
-   (exp expression?))
-  (add-exp
-   (exp1 expression?)
-   (exp2 expression?))
-  (mul-exp
-   (exp1 expression?)
-   (exp2 expression?))
-  (quotient-exp
-   (exp1 expression?)
-   (exp2 expression?)))
-
 (define-datatype env env?
   (empty-env)
   (extend-env
@@ -122,7 +74,7 @@
     (eopl:error "Extract in ~A, val is ~A" proc val)))
 
 
-;;;;;;;;;;;;;;; grammatical specification;;;;;;;;;;;;;;;;;;;;
+;; ---------------- The lexer specification -----------------
 (define the-lexical-spec
   '((whitespace (whitespace) skip)
     (comment ("%" (arbno (not #\newline))) skip)
@@ -133,11 +85,12 @@
     (number ("-" digit (arbno digit)) number)
     ))
 
+;; ------------ The grammar specification ---------------------
 (define the-grammar
   '(
     ;; specify whether it is an expression or an bool-exp
-    (program (expression) a-program)
-    (program (bool-exp) a-program)
+    (program (expression) a-program-exp)
+    (program (bool-exp) a-program-bool)
     
     (expression (number) const-exp)
     (expression
@@ -186,12 +139,23 @@
      ("less?" "(" expression "," expression ")")
      less-exp?)
     ))
-;;;;;;;;;;;;;;; end of grammatical specification;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;;;; lexer and parser ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; ------------------- Make lexer and parser-------------------
+(sllgen:make-define-datatypes the-lexical-spec the-grammar)
+
+(define list-the-datatype
+  (lambda ()
+    (sllgen:list-define-datatypes the-lexical-spec the-grammar)))
+
+(define just-scan
+  (sllgen:make-string-scanner the-lexical-spec the-grammar))
+
 (define scan&parse
   (sllgen:make-string-parser the-lexical-spec the-grammar))
-;;;;;;;;;;;;;;;;; end of lexer and parser ;;;;;;;;;;;;;;;;;;
+
+
 
 
 ;; run : String -> ExpVal
@@ -203,11 +167,10 @@
 (define value-of-program
   (lambda (pgm)
     (cases program pgm
-      (a-program (exp1)
-                 (cond
-                   [(bool-exp? exp1) (value-of-bool-exp exp1 (init-env))]
-                   [(expression? exp1) (value-of-expression exp1 (init-env))]
-                   [else (eopl:error "unsupport datatype ~A" exp1)])))))
+      (a-program-exp (exp1)
+                     (value-of-expression exp1 (init-env)))
+      (a-program-bool (exp1)
+                      (value-of-bool-exp exp1 (init-env))))))
 
 
 
@@ -313,9 +276,9 @@ add(4, 3))")
 
 
 (check-expect (scan&parse "let x = 5 in -(x, 3)")
-              (a-program (let-expression 'x (const-exp 5)
-                                  (diff-exp (var-expression 'x)
-                                            (const-exp 3)))))
+              (a-program-exp (let-expression 'x (const-exp 5)
+                                             (diff-exp (var-expression 'x)
+                                                       (const-exp 3)))))
 
 (check-expect (run program1) (num-val 2))
 (check-expect (run program2) (num-val -5))
