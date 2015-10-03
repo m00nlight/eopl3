@@ -39,7 +39,9 @@
   (num-val
    (num number?))
   (bool-val
-   (bool boolean?)))
+   (bool boolean?))
+  (list-val
+   (list list?)))
 
 ;; init-env : () -> Env
 ;; usage : (init-env) = [i = 1, v = 5, x = 10]
@@ -54,12 +56,6 @@
        (empty-env))))))
 
 
-;; expval->num : ExpVal -> Int
-(define expval->num
-  (lambda (val)
-    (cases expval val
-      [num-val (num) num]
-      [else (report-expval-extractor-error 'num val)])))
 
 ;; extend-env* : Listof(Symbol) * Listof(SchemVal) * Env -> Env
 (define extend-env*
@@ -79,12 +75,14 @@
                       (extend-env-star (cdr vars) (cdr exps)
                                        (extend-env (car vars) val env)))))))
 
-;; expval-bool : ExpVal -> Bool
-(define expval->bool
+;; expval->num : ExpVal -> SchemeVal
+(define expval->val
   (lambda (val)
     (cases expval val
+      [num-val (num) num]
       [bool-val (bool) bool]
-      [else (report-expval-extractor-error 'bool val)])))
+      [list-val (list) list]
+      [else (eopl:error "Wrong type of ~A\n" val)])))
 
 
 (define report-expval-extractor-error
@@ -163,6 +161,22 @@
     (expression
      ("print" expression)
      print-exp)
+
+    (expression
+     ("list" "(" (separated-list expression ",") ")")
+     list-literal)
+
+    (expression
+     ("cons" "(" expression "," expression ")")
+     list-cons)
+
+    (expression
+     ("emptylist")
+     list-empty)
+
+    (expression
+     ("unpack" (arbno identifier) "=" expression "in" expression)
+     unpack-expression)
     
     ))
 
@@ -205,11 +219,12 @@
       [var-expression (var) (apply-env var env)]
       [if-expression (exp1 exp2 exp3)
                      (let [(val1 (value-of-expression exp1 env))]
-                       (if (expval->bool val1)
+                       (if (expval->val val1)
                            (value-of-expression exp2 env)
                            (value-of-expression exp3 env)))]
       [let-expression (vars exps body)
-                      (let [(vals (map (lambda (x)
+                      (let [(vals (map
+                                   (lambda (x)
                                          (value-of-expression x env)) exps))]
                         (value-of-expression
                          body
@@ -221,54 +236,79 @@
       [diff-exp (exp1 exp2)
                 (let [(val1 (value-of-expression exp1 env))
                       (val2 (value-of-expression exp2 env))]
-                  (let [(num1 (expval->num val1))
-                        (num2 (expval->num val2))]
+                  (let [(num1 (expval->val val1))
+                        (num2 (expval->val val2))]
                     (num-val
                      (- num1 num2))))]
       [minus-exp (exp)
                  (let [(val (value-of-expression exp env))]
-                   (num-val (- (expval->num val))))]
+                   (num-val (- (expval->val val))))]
       [add-exp (exp1 exp2)
                (let [(val1 (value-of-expression exp1 env))
                      (val2 (value-of-expression exp2 env))]
-                 (num-val (+ (expval->num val1)
-                             (expval->num val2))))]
+                 (num-val (+ (expval->val val1)
+                             (expval->val val2))))]
       [mul-exp (exp1 exp2)
                (let [(val1 (value-of-expression exp1 env))
                      (val2 (value-of-expression exp2 env))]
-                 (num-val (* (expval->num val1)
-                             (expval->num val2))))]
+                 (num-val (* (expval->val val1)
+                             (expval->val val2))))]
       [quotient-exp (exp1 exp2)
                     (let [(val1 (value-of-expression exp1 env))
                           (val2 (value-of-expression exp2 env))]
-                      (num-val (quotient (expval->num val1)
-                                         (expval->num val2))))]
+                      (num-val (quotient (expval->val val1)
+                                         (expval->val val2))))]
       [zero-exp? (exp1)
                  (let [(val1 (value-of-expression exp1 env))]
-                   (if (zero? (expval->num val1))
+                   (if (zero? (expval->val val1))
                        (bool-val #t)
                        (bool-val #f)))]
       [equal-exp? (exp1 exp2)
                   (let [(val1 (value-of-expression exp1 env))
                         (val2 (value-of-expression exp2 env))]
-                    (bool-val (eqv? (expval->num val1)
-                                    (expval->num val2))))]
+                    (bool-val (eqv? (expval->val val1)
+                                    (expval->val val2))))]
       [greater-exp? (exp1 exp2)
                     (let [(val1 (value-of-expression exp1 env))
                           (val2 (value-of-expression exp2 env))]
-                      (bool-val (> (expval->num val1)
-                                   (expval->num val2))))]
+                      (bool-val (> (expval->val val1)
+                                   (expval->val val2))))]
       [less-exp? (exp1 exp2)
                  (let [(val1 (value-of-expression exp1 env))
                        (val2 (value-of-expression exp2 env))]
-                   (bool-val (< (expval->num val1)
-                                (expval->num val2))))]
+                   (bool-val (< (expval->val val1)
+                                (expval->val val2))))]
       [print-exp (exp)
                  (let [(val (value-of-expression exp env))]
-                   (eopl:printf "~A\n" (expval->num val))
+                   (eopl:printf "~A\n" (expval->val val))
                    (num-val 1))]
 
+      [list-empty ()
+                  (list-val '())]
+
+      [list-cons (exp tail)
+                 (let [(val (value-of-expression exp env))]
+                   (list-val (cons val
+                                   (expval->val
+                                    (value-of-expression tail env)))))]
+      [list-literal (ls)
+                    (list-val (map (lambda (x)
+                                     (expval->val
+                                      (value-of-expression x env)) ls)))]
+      [unpack-expression (vars exps body)
+                         (let [(vals (value-of-expression exps env))]
+                           (cases expval vals
+                             [list-val (list)
+                                       (if (= (length vars) (length list))
+                                           (value-of-expression
+                                            body
+                                            (extend-env* vars list env))
+                                           (eopl:error "Unpack length diff"))]
+                             [else
+                              (eopl:error "Error type to unpack ~A" vals)]))]
+      
       )))
+
 
 ;; lexer and parse test
 
@@ -291,6 +331,20 @@
    in let* x = -(x, 1) y = -(x, 2)
       in -(x, y)")
 
+(define program7
+  "let u = 7
+   in cons(u, cons(3, emptylist))")
+
+(define program8
+  "let u = 7
+   in unpack x y = cons(u, cons(3, emptylist))
+      in -(x, y)")
+
+(define program9
+  "let u = 7
+   in unpack x y z = cons(u, cons(3, emptylist))
+      in -(x, y)")
+
 
 (check-expect (run program1) (num-val 1))
 (check-expect (run program2) (num-val 1))
@@ -298,5 +352,8 @@
 (check-expect (run program4) (num-val 7))
 (check-expect (run program5) (num-val 1))
 (check-expect (run program6) (num-val 2))
+(check-expect (run program7) (list-val (list (num-val 7) (num-val 3))))
+(check-expect (run program8) (num-val 4))
+(check-error (run program9))
 
 (test)
