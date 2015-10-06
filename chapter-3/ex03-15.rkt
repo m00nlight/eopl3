@@ -26,7 +26,7 @@
 (define apply-env
   (lambda (var e)
     (cases env e
-      [empty-env () (report-no-binding-found)]
+      [empty-env () (report-no-binding-found var)]
       [extend-env (saved-var saved-val saved-env)
                   (if (eqv? saved-var var)
                       saved-val
