@@ -210,44 +210,89 @@
 ;; mutally recuvsive definition of even? and odd?
 
 (define program2
-  "let Ye = proc (fun)
-              proc (n)
-                if zero?(n)
-                then true
-                else ((fun fun) -(n, 1))
-   in let Yo = proc (fun)
+  "let Ye = proc (fun-odd)
+              proc (fun-even)
                 proc (n)
                   if zero?(n)
-                  then false
-                  else ((fun fun) -(n, 1))
+                  then true
+                  else (((fun-odd fun-even) fun-odd) -(n, 1))
+   in let Yo = proc (fun-even)
+                proc (fun-odd)
+                  proc (n)
+                    if zero?(n)
+                    then false
+                    else (((fun-even fun-odd) fun-even) -(n, 1))
    in let even? = proc (n)
-                    ((Ye Yo) n)
+                    (((Yo Yo) Ye) n)
    in let odd? = proc (n)
-                    ((Yo Ye) n)
+                    (((Ye Ye) Yo) n)
    in (even? 3)")
 
 (define program3
-  "let Ye = proc (fun)
-              proc (n)
-                if zero?(n)
-                then true
-                else ((fun fun) -(n, 1))
-   in let Yo = proc (fun)
+  "let Ye = proc (fun-odd)
+              proc (fun-even)
                 proc (n)
                   if zero?(n)
-                  then false
-                  else ((fun fun) -(n, 1))
+                  then true
+                  else (((fun-odd fun-even) fun-odd) -(n, 1))
+   in let Yo = proc (fun-even)
+                proc (fun-odd)
+                  proc (n)
+                    if zero?(n)
+                    then false
+                    else (((fun-even fun-odd) fun-even) -(n, 1))
    in let even? = proc (n)
-                    ((Ye Yo) n)
+                    (((Yo Yo) Ye) n)
    in let odd? = proc (n)
-                    ((Yo Ye) n)
-   in (even? 0)")
-               
+                    (((Ye Ye) Yo) n)
+   in (even? 8)")
+
+
+(define program4
+  "let Ye = proc (fun-odd)
+              proc (fun-even)
+                proc (n)
+                  if zero?(n)
+                  then true
+                  else (((fun-odd fun-even) fun-odd) -(n, 1))
+   in let Yo = proc (fun-even)
+                proc (fun-odd)
+                  proc (n)
+                    if zero?(n)
+                    then false
+                    else (((fun-even fun-odd) fun-even) -(n, 1))
+   in let even? = proc (n)
+                    (((Yo Yo) Ye) n)
+   in let odd? = proc (n)
+                    (((Ye Ye) Yo) n)
+   in (odd? 8)")
+
+(define program5
+  "let Ye = proc (fun-odd)
+              proc (fun-even)
+                proc (n)
+                  if zero?(n)
+                  then true
+                  else (((fun-odd fun-even) fun-odd) -(n, 1))
+   in let Yo = proc (fun-even)
+                proc (fun-odd)
+                  proc (n)
+                    if zero?(n)
+                    then false
+                    else (((fun-even fun-odd) fun-even) -(n, 1))
+   in let even? = proc (n)
+                    (((Yo Yo) Ye) n)
+   in let odd? = proc (n)
+                    (((Ye Ye) Yo) n)
+   in (odd? 9)")
+
 
 
 (check-expect (value-of program1) (bool-val #t))
 (check-expect (value-of program2) (bool-val #f))
 (check-expect (value-of program3) (bool-val #t))
+(check-expect (value-of program4) (bool-val #f))
+(check-expect (value-of program5) (bool-val #t))
 
 (test)
 
