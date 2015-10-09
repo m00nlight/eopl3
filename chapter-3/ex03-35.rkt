@@ -77,19 +77,25 @@
    (saved-val (lambda (x) #t))
    (saved-env env?)))
 
+(define extend-env-rec
+  (lambda (p-name b-var body saved-env)
+    (let [(vec (make-vector 1))]
+      (let [(new-env (extend-env p-name vec saved-env))]
+        (vector-set! vec 0
+                     (proc-val (procedure b-var body new-env)))
+        new-env))))
+
 ;; apply-env : Var * Env -> ExpVal
 (define apply-env
   (lambda (var e)
     (cases env e
       [empty-env () (report-no-binding-found var)]
       [extend-env (saved-var saved-val saved-env)
-                  (if (eqv? saved-var var)
-                      saved-val
-                      (apply-env var saved-env))]
-      [extend-env-rec (proc-name bound-var proc-body saved-env)
-                      (if (eqv? var proc-name)
-                          (proc-val (procedure bound-var proc-body e))
-                          (apply-env var saved-env))])))
+                  (if (eqv? var saved-var)
+                      (if (not (vector? saved-val))
+                          saved-val
+                          (vector-ref saved-val 0))
+                      (apply-env var saved-env))])))
 
 (define report-no-binding-found
   (lambda (search-var)
