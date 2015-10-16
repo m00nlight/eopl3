@@ -161,7 +161,7 @@
 
 (define-datatype proc proc?
   (procedure
-   (body expression?)
+   (body nameless-exp?)
    (saved-nameless-env nameless-environment?)))
 
 ;; nameless-environment? : SchemeVal -> Bool
@@ -293,7 +293,7 @@
   (lambda (pgm)
     (cases nameless-program pgm
       [a-nameless-program (exp1)
-                          (value-of exp1 (init-senv))])))
+                          (value-of exp1 (init-nameless-env))])))
 
 
 ;; run : String -> ExpVal
