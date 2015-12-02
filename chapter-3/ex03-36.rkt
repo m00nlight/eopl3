@@ -87,13 +87,6 @@
                            (helper (- n 1) (cons n acc))))])
       (helper (- n 1) '()))))
 
-;; replicate : SchemeVal * Int -> Listof(SchemeVal)
-(define replicate
-  (lambda (elem n)
-    (if (zero? n)
-        '()
-        (cons elem (replicate elem (- n 1))))))
-
 (define extend-env*
   (lambda (vars vals saved-env)
     (if (null? vars)
@@ -103,24 +96,12 @@
 
 (define extend-env-rec
   (lambda (p-names b-vars bodys saved-env)
-    (let [(vec (make-vector (length p-names)))]
-      (let [(new-env (extend-env* p-names (replicate vec (length p-names))
-                                  saved-env))]
-        (for-each (lambda (x)
-                    (vector-set! vec x
-                                 (proc-val (procedure
-                                            (list-ref b-vars x)
-                                            (list-ref bodys x)
-                                            new-env))))
-          (range (length p-names)))
-        (for-each (lambda (x)
-                    (vector-set! vec x
-                                 (proc-val
-                                  (procedure
-                                   (list-ref b-vars x)
-                                   (list-ref bodys x)
-                                   new-env))))
-                  (range (length p-names)))
+    (let [(vecs (map (lambda (_) (make-vector 1)) p-names))]
+      (let [(new-env (extend-env* p-names vecs saved-env))]
+        (for-each (lambda (vec b-var body)
+                    (vector-set! vec 0 (proc-val
+                                        (procedure b-var body new-env))))
+                  vecs b-vars bodys)
         new-env))))
 
 ;; apply-env : Var * Env -> ExpVal
@@ -258,11 +239,18 @@
      odd(x)  = if zero?(x) then 0 else (even -(x, 1))
    in (odd 13)")
 
+(define program4
+  "letrec
+     even(x) = if zero?(x) then 1 else (odd -(x, 1))
+     odd(x)  = if zero?(x) then 0 else (even -(x, 1))
+   in (odd 14)")
+
 
 ;; (eopl:printf "~A\n" (scan&parse program1))
 (check-expect (value-of program1) (num-val 12))
 (check-expect (value-of program2) (num-val 55))
 (check-expect (value-of program3) (num-val 1))
+(check-expect (value-of program4) (num-val 0))
 
 (test)
 
