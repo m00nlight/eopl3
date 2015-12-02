@@ -147,7 +147,7 @@
    (body expression?)
    (saved-env env?)))
 
-;; apply-procedure : Proc * ExpVal -> ExpVal
+;; apply-procedure : Proc * ExpVal * Env -> ExpVal
 (define apply-procedure
   (lambda (proc1 val env)
     (cases proc proc1
